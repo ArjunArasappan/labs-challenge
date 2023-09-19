@@ -1,16 +1,35 @@
+import json
+from app import db, app, DB_FILE
+from models import User, Club, Tag
 import os
-from app import db, DB_FILE
 
+#creates the user josh
 def create_user():
-    print("TODO: Create a user called josh")
+    user = User(username='josh', password='hashed_password') 
+    db.session.add(user)
+    db.session.commit()
 
+#loads in data from the clubs.json
 def load_data():
-    from models import *
-    print("TODO: Load in clubs.json to the database.")
+    with open('clubs.json', 'r') as f:
+        clubs = json.load(f)
+    
+    for club in clubs:
+            new_club = Club(name=club['name'], description=club['description'], code=club['code'])
+            db.session.add(new_club)
 
+            for tag_name in club['tags']:
+                tag = Tag.query.filter_by(name=tag_name).first()
+                
+                #create tag if it doesnt exist
+                if not tag:
+                    tag = Tag(name=tag_name)
+                    db.session.add(tag) 
+                new_club.tags.append(tag)
+    
+    db.session.commit()
+    
 
-
-# No need to modify the below code.
 if __name__ == '__main__':
     # Delete any existing database before bootstrapping a new one.
     LOCAL_DB_FILE = "instance/" + DB_FILE
@@ -19,5 +38,5 @@ if __name__ == '__main__':
 
     with app.app_context():
         db.create_all()
-    create_user()
-    load_data()
+        create_user()
+        load_data()
